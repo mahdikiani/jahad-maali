@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'me_quran';
+  src: url('/fonts/me_quran.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  --font-quran: "me_quran", serif;
+}
+
+body {
+  direction: rtl;
+  font-family: var(--font-sans);
+}
+
+.font-quran {
+  font-family: var(--font-quran);
+}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
