@@ -13,6 +13,8 @@ import { AllCampaignsPage } from './components/campaigns/AllCampaignsPage';
 import { DonationModal } from './components/donations/DonationModal';
 import { MessagesSection } from './components/messages/MessagesSection';
 import { ImpactSection } from './components/impact/ImpactSection';
+import { AllReportsPage } from './components/impact/AllReportsPage';
+import { ReportPage } from './components/impact/ReportPage';
 import { TestimonialsSection } from './components/testimonials/TestimonialsSection';
 import { LoginModal } from './components/auth/LoginModal';
 import { AdminPanel } from './components/admin/AdminPanel';
@@ -25,7 +27,7 @@ import { useToast } from './hooks/useToast';
 import { api } from './lib/api';
 import type { Campaign } from './types';
 
-type Page = 'home' | { type: 'campaign'; id: number } | 'all-campaigns';
+type Page = 'home' | { type: 'campaign'; id: number } | 'all-campaigns' | 'all-reports' | { type: 'report'; id: number };
 
 export default function App() {
   const { auth, loading: authLoading, loginWithOtp, adminLogin, logout } = useAuth();
@@ -42,19 +44,32 @@ export default function App() {
 
   const campaignsSectionRef = useRef<HTMLDivElement>(null);
 
-  // Handle URL-based routing
+  // Handle URL-based routing + browser back/forward
   useEffect(() => {
-    const path = window.location.pathname;
-    const params = new URLSearchParams(window.location.search);
+    const handleLocation = () => {
+      const path = window.location.pathname;
+      if (path.startsWith('/campaign/')) {
+        const id = parseInt(path.replace('/campaign/', ''));
+        if (!isNaN(id)) setPage({ type: 'campaign', id });
+        else setPage('home');
+      } else if (path === '/campaigns') {
+        setPage('all-campaigns');
+      } else if (path === '/reports') {
+        setPage('all-reports');
+      } else if (path.startsWith('/report/')) {
+        const id = parseInt(path.replace('/report/', ''));
+        if (!isNaN(id)) setPage({ type: 'report', id });
+        else setPage('all-reports');
+      } else {
+        setPage('home');
+      }
+    };
 
-    if (path.startsWith('/campaign/')) {
-      const id = parseInt(path.replace('/campaign/', ''));
-      if (!isNaN(id)) setPage({ type: 'campaign', id });
-    } else if (path === '/campaigns') {
-      setPage('all-campaigns');
-    }
+    // Initial load
+    handleLocation();
 
     // Payment result
+    const params = new URLSearchParams(window.location.search);
     const payment = params.get('payment');
     if (payment === 'success') {
       const ref = params.get('ref');
@@ -64,13 +79,19 @@ export default function App() {
       showToast('پرداخت ناموفق بود یا لغو شد.', 'error');
       window.history.replaceState({}, '', '/');
     }
+
+    // Browser back/forward
+    window.addEventListener('popstate', handleLocation);
+    return () => window.removeEventListener('popstate', handleLocation);
   }, []);
 
   const navigate = (p: Page) => {
     setPage(p);
     if (p === 'home') window.history.pushState({}, '', '/');
     else if (p === 'all-campaigns') window.history.pushState({}, '', '/campaigns');
-    else if (typeof p === 'object') window.history.pushState({}, '', `/campaign/${p.id}`);
+    else if (p === 'all-reports') window.history.pushState({}, '', '/reports');
+    else if (typeof p === 'object' && p.type === 'campaign') window.history.pushState({}, '', `/campaign/${p.id}`);
+    else if (typeof p === 'object' && p.type === 'report') window.history.pushState({}, '', `/report/${p.id}`);
     window.scrollTo(0, 0);
   };
 
@@ -136,6 +157,32 @@ export default function App() {
     </AnimatePresence>
   );
 
+  // ── Report detail page ──
+  if (typeof page === 'object' && page.type === 'report') {
+    return (
+      <div className="min-h-screen bg-[#FDFBF7]">
+        {navbar}
+        <ReportPage reportId={page.id} />
+        <Footer onNavigate={(path) => navigate(path === '/reports' ? 'all-reports' : path === '/campaigns' ? 'all-campaigns' : 'home')} />
+        {modals}
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+      </div>
+    );
+  }
+
+  // ── All reports page ──
+  if (page === 'all-reports') {
+    return (
+      <div className="min-h-screen bg-[#FDFBF7]">
+        {navbar}
+        <AllReportsPage onOpen={(id) => navigate({ type: 'report', id })} />
+        <Footer onNavigate={(path) => navigate(path === '/reports' ? 'all-reports' : path === '/campaigns' ? 'all-campaigns' : 'home')} />
+        {modals}
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+      </div>
+    );
+  }
+
   // ── Campaign detail page ──
   if (typeof page === 'object' && page.type === 'campaign') {
     return (
@@ -157,7 +204,7 @@ export default function App() {
         <AllCampaignsPage campaigns={campaigns} loading={campaignsLoading}
           onDonate={setSelectedCampaign} onOpen={(c) => navigate({ type: 'campaign', id: c.id })}
           onBack={() => navigate('home')} isAdmin={auth.isAdmin} onAdd={() => setShowAdmin(true)} />
-        <Footer />
+        <Footer onNavigate={(path) => navigate(path === '/reports' ? 'all-reports' : path === '/campaigns' ? 'all-campaigns' : 'home')} />
         {modals}
         <ToastContainer toasts={toasts} onRemove={removeToast} />
       </div>
@@ -183,13 +230,16 @@ export default function App() {
         )}
       </div>
 
-      <ImpactSection />
+      <ImpactSection
+        onOpenReport={(id) => navigate({ type: 'report', id })}
+        onViewAll={() => navigate('all-reports')}
+      />
       <MessagesSection auth={auth} onLoginRequired={openLogin} />
       <TestimonialsSection />
       <VolunteerSection campaigns={campaigns} onToast={showToast} />
       <FinalCTA campaigns={campaigns} onDonate={setSelectedCampaign} />
       <MotivationSection />
-      <Footer />
+      <Footer onNavigate={(path) => navigate(path === '/reports' ? 'all-reports' : path === '/campaigns' ? 'all-campaigns' : 'home')} />
 
       {modals}
       <ToastContainer toasts={toasts} onRemove={removeToast} />

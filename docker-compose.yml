@@ -3,9 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
     restart: unless-stopped
-    ports:
-      - "3001:3001"
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -23,6 +24,20 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${PROJECT_NAME}.entrypoints=web"
+      - "traefik.http.routers.${PROJECT_NAME}.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.${PROJECT_NAME}-secure.entrypoints=websecure"
+      - "traefik.http.routers.${PROJECT_NAME}-secure.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.${PROJECT_NAME}-secure.tls=true"
+      - "traefik.http.routers.${PROJECT_NAME}-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${PROJECT_NAME}.loadbalancer.server.port=3001"
+      # - "traefik.http.services.${PROJECT_NAME}.loadbalancer.server.scheme=https"
+      - "traefik.docker.network=traefik-net"
 
-volumes:
-  db_data:
+networks:
+  traefik-net:
+    external: true

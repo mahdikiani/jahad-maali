@@ -40,7 +40,7 @@ export function CampaignPage({ campaignId, onBack, onDonate }: CampaignPageProps
     <div className="min-h-screen bg-[#FDFBF7]">
       {/* Back button */}
       <div className="max-w-4xl mx-auto px-4 pt-6">
-        <button onClick={onBack}
+        <button onClick={() => window.history.back()}
           className="flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors text-sm font-bold">
           <ArrowRight className="w-4 h-4" />
           بازگشت

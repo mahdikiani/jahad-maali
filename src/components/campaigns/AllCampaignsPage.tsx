@@ -22,7 +22,7 @@ export function AllCampaignsPage({ campaigns, loading, onDonate, onOpen, onBack,
         {/* Header */}
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-4">
-            <button onClick={onBack}
+            <button onClick={() => window.history.back()}
               className="flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors text-sm font-bold">
               <ArrowRight className="w-4 h-4" />
               بازگشت

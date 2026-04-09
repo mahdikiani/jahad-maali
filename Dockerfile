@@ -4,8 +4,11 @@ FROM oven/bun:1-alpine AS builder
 WORKDIR /app
 
 # Install deps first (layer cache)
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+RUN http_proxy=$HTTP_PROXY https_proxy=$HTTPS_PROXY bun install --frozen-lockfile
 
 # Copy source and build
 COPY . .
@@ -18,9 +21,12 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+
 # Only production deps
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production
+RUN http_proxy=$HTTP_PROXY https_proxy=$HTTPS_PROXY bun install --frozen-lockfile --production
 
 # Copy server source
 COPY server.ts ./

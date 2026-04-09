@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Check, EyeOff, Loader2, Trash2 } from 'lucide-react';
+import { Plus, X, Check, EyeOff, Loader2, Trash2, Users } from 'lucide-react';
 import { Modal } from '../shared/Modal';
 import { api } from '../../lib/api';
 import type { Campaign, Message } from '../../types';
@@ -11,17 +11,19 @@ interface AdminPanelProps {
   auth: { isAdmin: boolean; isSuperAdmin: boolean };
 }
 
-type Tab = 'campaigns' | 'messages' | 'testimonials';
+type Tab = 'campaigns' | 'messages' | 'volunteers' | 'reports' | 'testimonials';
 
 export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelProps) {
   if (!auth.isAdmin) return null;
   const [tab, setTab] = useState<Tab>('campaigns');
   const [pendingMsgs, setPendingMsgs] = useState<Message[]>([]);
+  const [volunteers, setVolunteers] = useState<any[]>([]);
   const [showAddCampaign, setShowAddCampaign] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (tab === 'messages') api.getPendingMessages().then(setPendingMsgs).catch(() => {});
+    if (tab === 'volunteers') api.getVolunteers().then(setVolunteers).catch(() => {});
   }, [tab]);
 
   const handleAddCampaign = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -56,7 +58,9 @@ export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelPr
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'campaigns', label: 'کمپین‌ها' },
-    { key: 'messages', label: `پیام‌های در انتظار ${pendingMsgs.length ? `(${pendingMsgs.length})` : ''}` },
+    { key: 'messages', label: `پیام‌ها${pendingMsgs.length ? ` (${pendingMsgs.length})` : ''}` },
+    { key: 'volunteers', label: 'داوطلبان' },
+    { key: 'reports', label: 'گزارش جدید' },
     { key: 'testimonials', label: 'Testimonials' },
   ];
 
@@ -123,6 +127,36 @@ export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelPr
         </div>
       )}
 
+      {/* Volunteers tab */}
+      {tab === 'volunteers' && (
+        <div className="space-y-3">
+          {volunteers.length === 0 && <p className="text-center text-stone-400 py-8">هنوز داوطلبی ثبت نشده است.</p>}
+          {volunteers.map((v: any) => (
+            <div key={v.id} className="p-4 bg-stone-50 rounded-2xl border border-stone-200">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <p className="font-bold text-sm text-stone-900">{v.name}</p>
+                  <p className="text-xs text-stone-400 mt-0.5" dir="ltr">{v.phone}</p>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  v.type === 'physical' ? 'bg-blue-100 text-blue-700'
+                  : v.type === 'inkind' ? 'bg-amber-100 text-amber-700'
+                  : 'bg-purple-100 text-purple-700'
+                }`}>
+                  {v.type === 'physical' ? 'داوطلب حضوری' : v.type === 'inkind' ? 'اهدای کالا' : 'پیام پشتیبانی'}
+                </span>
+              </div>
+              <p className="text-sm text-stone-600 mb-2">«{v.message}»</p>
+              {v.campaign_title && <p className="text-xs text-[#8B7355]">کمپین: {v.campaign_title}</p>}
+              <p className="text-xs text-stone-400 mt-1">{new Date(v.created_at).toLocaleDateString('fa-IR')}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add Report tab */}
+      {tab === 'reports' && <ReportsAdmin campaigns={campaigns} />}
+
       {/* Testimonials tab */}
       {tab === 'testimonials' && <TestimonialsAdmin />}
 
@@ -177,6 +211,63 @@ function Field({ label, name, type = 'text', required = false, placeholder = '' 
       <input name={name} type={type} required={required} placeholder={placeholder}
         className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-[#1F3D2B] outline-none text-sm" />
     </div>
+  );
+}
+
+function ReportsAdmin({ campaigns }: { campaigns: Campaign[] }) {
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const fd = new FormData(e.currentTarget);
+    try {
+      await api.createImpactReport({
+        campaign_id: Number(fd.get('campaign_id')),
+        title: fd.get('title'),
+        body: fd.get('body'),
+        amount_spent: Number(fd.get('amount_spent')) || 0,
+        image_url: fd.get('image_url') || null,
+        video_url: fd.get('video_url') || null,
+      });
+      setDone(true);
+      (e.target as HTMLFormElement).reset();
+      setTimeout(() => setDone(false), 3000);
+    } catch (e: any) { alert(e.message); }
+    finally { setLoading(false); }
+  };
+
+  if (done) return (
+    <div className="py-10 text-center text-green-600 font-bold">گزارش با موفقیت ثبت شد.</div>
+  );
+
+  return (
+    <form onSubmit={handleAdd} className="space-y-4">
+      <div>
+        <label className="block text-xs font-bold text-stone-400 mb-1.5">کمپین مرتبط</label>
+        <select name="campaign_id" required className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-[#8B7355] outline-none text-sm">
+          <option value="">— انتخاب کمپین —</option>
+          {campaigns.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+        </select>
+      </div>
+      <Field label="عنوان گزارش" name="title" required />
+      <div>
+        <label className="block text-xs font-bold text-stone-400 mb-1.5">متن گزارش</label>
+        <textarea name="body" required rows={5}
+          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-[#8B7355] outline-none text-sm resize-none" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="مبلغ هزینه‌شده (تومان)" name="amount_spent" type="number" />
+        <Field label="آدرس تصویر" name="image_url" placeholder="https://..." />
+      </div>
+      <Field label="آدرس ویدئو (اختیاری)" name="video_url" placeholder="https://..." />
+      <button type="submit" disabled={loading}
+        className="w-full py-3 bg-stone-900 text-white rounded-2xl font-bold hover:bg-stone-800 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+        ثبت گزارش
+      </button>
+    </form>
   );
 }
 
