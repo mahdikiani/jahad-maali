@@ -6,3 +6,9 @@ dist
 *.db-shm
 *.db-wal
 README.md
+
+Dockerfile
+Dockerfile.prod
+docker-compose.yml
+docker-compose.prod.yml
+.env
