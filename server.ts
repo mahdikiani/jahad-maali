@@ -24,7 +24,8 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  const db = new Database('charity.db');
+  const dbPath = process.env.DB_PATH || 'charity.db';
+  const db = new Database(dbPath);
   initDb(db);
   seedData(db);
 

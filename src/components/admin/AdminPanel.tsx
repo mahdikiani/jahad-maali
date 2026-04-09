@@ -8,11 +8,13 @@ interface AdminPanelProps {
   onClose: () => void;
   campaigns: Campaign[];
   onRefresh: () => void;
+  auth: { isAdmin: boolean; isSuperAdmin: boolean };
 }
 
 type Tab = 'campaigns' | 'messages' | 'testimonials';
 
-export function AdminPanel({ onClose, campaigns, onRefresh }: AdminPanelProps) {
+export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelProps) {
+  if (!auth.isAdmin) return null;
   const [tab, setTab] = useState<Tab>('campaigns');
   const [pendingMsgs, setPendingMsgs] = useState<Message[]>([]);
   const [showAddCampaign, setShowAddCampaign] = useState(false);

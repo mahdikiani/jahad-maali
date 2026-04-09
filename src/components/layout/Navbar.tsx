@@ -1,4 +1,4 @@
-import { Heart, LogOut, User, Shield } from 'lucide-react';
+import { Heart, LogOut, User, Shield, LayoutGrid } from 'lucide-react';
 import type { AuthState } from '../../types';
 
 interface NavbarProps {
@@ -7,21 +7,24 @@ interface NavbarProps {
   onLogout: () => void;
   onAdminClick: () => void;
   onProfileClick: () => void;
+  onHomeClick: () => void;
 }
 
-export function Navbar({ auth, onLoginClick, onLogout, onAdminClick, onProfileClick }: NavbarProps) {
+export function Navbar({ auth, onLoginClick, onLogout, onAdminClick, onProfileClick, onHomeClick }: NavbarProps) {
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#E5DED0]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#8B7355] rounded-xl flex items-center justify-center">
-              <Heart className="w-5 h-5 text-white fill-current" />
-            </div>
-            <div>
-              <span className="text-base font-black text-stone-900 tracking-tight">جهاد با مال</span>
-              <p className="text-[10px] text-stone-400 leading-none">مرکز امداد و خیریه</p>
-            </div>
+          <div className="flex items-center gap-4">
+            <button onClick={onHomeClick} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <div className="w-9 h-9 bg-[#8B7355] rounded-xl flex items-center justify-center">
+                <Heart className="w-5 h-5 text-white fill-current" />
+              </div>
+              <div>
+                <span className="text-base font-black text-stone-900 tracking-tight">جهاد با مال</span>
+                <p className="text-[10px] text-stone-400 leading-none">مرکز امداد و خیریه</p>
+              </div>
+            </button>
           </div>
 
           <div className="flex items-center gap-2">

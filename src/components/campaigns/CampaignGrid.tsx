@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { Plus, ArrowLeft } from 'lucide-react';
 import { CampaignCard } from './CampaignCard';
 import type { Campaign } from '../../types';
 
@@ -8,9 +8,10 @@ interface CampaignGridProps {
   onDonate: (campaign: Campaign) => void;
   onAdd: () => void;
   onOpenCampaign: (campaign: Campaign) => void;
+  onViewAll: () => void;
 }
 
-export function CampaignGrid({ campaigns, isAdmin, onDonate, onAdd, onOpenCampaign }: CampaignGridProps) {
+export function CampaignGrid({ campaigns, isAdmin, onDonate, onAdd, onOpenCampaign, onViewAll }: CampaignGridProps) {
   const active = campaigns.filter(c => c.status === 'active').slice(0, 3);
 
   return (
@@ -21,30 +22,33 @@ export function CampaignGrid({ campaigns, isAdmin, onDonate, onAdd, onOpenCampai
             <h2 className="text-3xl font-black text-stone-900 mb-1">کمپین‌های فعال</h2>
             <p className="text-stone-500">محل جهاد خود را انتخاب کنید.</p>
           </div>
-          {isAdmin && (
-            <button onClick={onAdd}
-              className="flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white rounded-2xl font-bold hover:bg-stone-800 transition-all text-sm">
-              <Plus className="w-4 h-4" />
-              کمپین جدید
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button onClick={onAdd}
+                className="flex items-center gap-2 px-4 py-2.5 bg-stone-900 text-white rounded-2xl font-bold hover:bg-stone-800 transition-all text-sm">
+                <Plus className="w-4 h-4" /> کمپین جدید
+              </button>
+            )}
+          </div>
         </div>
 
         {active.length === 0 ? (
-          <div className="text-center py-20 text-[#6B5E3B]/60">هنوز کمپینی ثبت نشده است.</div>
+          <div className="text-center py-20 text-stone-400">هنوز کمپینی ثبت نشده است.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {active.map(c => <CampaignCard key={c.id} campaign={c} onDonate={onDonate} onOpen={onOpenCampaign} />)}
+            {active.map(c => (
+              <CampaignCard key={c.id} campaign={c} onDonate={onDonate} onOpen={onOpenCampaign} />
+            ))}
           </div>
         )}
 
-        {campaigns.filter(c => c.status === 'active').length > 3 && (
-          <div className="text-center mt-10">
-            <button className="px-8 py-3 border-2 border-stone-900 text-stone-900 rounded-2xl font-bold hover:bg-stone-900 hover:text-white transition-all">
-              مشاهده همه کمپین‌ها
-            </button>
-          </div>
-        )}
+        <div className="text-center mt-10">
+          <button onClick={onViewAll}
+            className="inline-flex items-center gap-2 px-8 py-3 border-2 border-[#8B7355] text-[#8B7355] rounded-2xl font-bold hover:bg-[#8B7355] hover:text-white transition-all group">
+            مشاهده همه کمپین‌ها
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          </button>
+        </div>
       </div>
     </section>
   );

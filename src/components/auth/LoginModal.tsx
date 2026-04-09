@@ -12,24 +12,19 @@ interface LoginModalProps {
 type Tab = 'otp' | 'admin';
 type OtpStep = 'phone' | 'code';
 
-const IS_DEV = import.meta.env.DEV;
-
 export function LoginModal({ onClose, onLoginSuccess, onAdminLogin }: LoginModalProps) {
   const [tab, setTab] = useState<Tab>('otp');
   const [otpStep, setOtpStep] = useState<OtpStep>('phone');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [devCode, setDevCode] = useState(''); // نمایش کد در dev mode
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); setError(''); setDevCode('');
+    setLoading(true); setError('');
     try {
-      const res = await api.sendOtp(phone) as any;
-      // در dev mode سرور کد رو برمیگردونه
-      if (res?.dev_code) setDevCode(res.dev_code);
+      await api.sendOtp(phone);
       setOtpStep('code');
     } catch (err: any) {
       setError(err.message);
@@ -103,12 +98,6 @@ export function LoginModal({ onClose, onLoginSuccess, onAdminLogin }: LoginModal
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <p className="text-sm text-stone-600">کد ۶ رقمی ارسال شده به <span className="font-bold" dir="ltr">{phone}</span> را وارد کنید.</p>
-              {/* Dev mode hint */}
-              {IS_DEV && devCode && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 text-sm font-mono text-center">
-                  🛠 کد تست: <strong className="text-lg tracking-widest">{devCode}</strong>
-                </div>
-              )}
               <div>
                 <label className="block text-xs font-bold text-stone-400 mb-1.5">کد تأیید</label>
                 <input

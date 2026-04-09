@@ -68,14 +68,12 @@ export function authRouter(db: Database) {
     const isDev = process.env.NODE_ENV !== 'production';
     try {
       await sendKavenegarOtp(phone, code);
-      const response: any = { success: true };
-      if (isDev) response.dev_code = code; // همیشه در dev نشون بده
-      res.json(response);
+      if (isDev) console.log(`[DEV] OTP for ${phone}: ${code}`);
+      res.json({ success: true });
     } catch (err) {
       if (isDev) {
-        // در dev حتی اگه کاوه‌نگار خطا داد، کد رو برگردون
         console.log(`[DEV fallback] OTP for ${phone}: ${code}`);
-        res.json({ success: true, dev_code: code });
+        res.json({ success: true });
       } else {
         res.status(500).json({ error: 'خطا در ارسال پیامک' });
       }

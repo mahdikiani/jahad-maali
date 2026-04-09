@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      KAVENEGAR_API_KEY: ${KAVENEGAR_API_KEY}
+      ZARINPAL_MERCHANT_ID: ${ZARINPAL_MERCHANT_ID}
+      CALLBACK_URL: ${CALLBACK_URL}
+      DB_PATH: /data/charity.db
+    volumes:
+      - ./db_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/campaigns"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  db_data:
