@@ -1,5 +1,9 @@
-import { Heart, LogOut, User, Shield, LayoutGrid } from 'lucide-react';
+import { Heart, LogOut, User, Shield } from 'lucide-react';
 import type { AuthState } from '../../types';
+import { LangSwitcher } from '../shared/LangSwitcher';
+import { useLang } from '../../lib/LangContext';
+import { t } from '../../lib/i18n';
+import { useSiteConfig } from '../../lib/SiteConfig';
 
 interface NavbarProps {
   auth: AuthState;
@@ -11,6 +15,8 @@ interface NavbarProps {
 }
 
 export function Navbar({ auth, onLoginClick, onLogout, onAdminClick, onProfileClick, onHomeClick }: NavbarProps) {
+  const { lang } = useLang();
+  const { siteName } = useSiteConfig();
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#E5DED0]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,20 +27,21 @@ export function Navbar({ auth, onLoginClick, onLogout, onAdminClick, onProfileCl
                 <Heart className="w-5 h-5 text-white fill-current" />
               </div>
               <div>
-                <span className="text-base font-black text-stone-900 tracking-tight">جهاد با مال</span>
-                <p className="text-[10px] text-stone-400 leading-none">مرکز امداد و خیریه</p>
+                <span className="text-base font-black text-stone-900 tracking-tight">{siteName}</span>
+                <p className="text-[10px] text-stone-400 leading-none">{t(lang, 'siteSubtitle')}</p>
               </div>
             </button>
           </div>
 
           <div className="flex items-center gap-2">
+            <LangSwitcher />
             {auth.user ? (
               <>
                 {auth.isAdmin && (
                   <button onClick={onAdminClick}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold hover:bg-amber-100 transition-colors">
                     <Shield className="w-3.5 h-3.5" />
-                    پنل ادمین
+                    {t(lang, 'adminPanel')}
                   </button>
                 )}
                 <button onClick={onProfileClick}
@@ -42,7 +49,7 @@ export function Navbar({ auth, onLoginClick, onLogout, onAdminClick, onProfileCl
                   <User className="w-3.5 h-3.5" />
                   {auth.user.name || auth.user.phone}
                 </button>
-                <button onClick={onLogout} className="p-2 text-stone-400 hover:text-stone-700 transition-colors" title="خروج">
+                <button onClick={onLogout} className="p-2 text-stone-400 hover:text-stone-700 transition-colors" title={t(lang, 'logout')}>
                   <LogOut className="w-4 h-4" />
                 </button>
               </>
@@ -50,7 +57,7 @@ export function Navbar({ auth, onLoginClick, onLogout, onAdminClick, onProfileCl
               <button onClick={onLoginClick}
                 className="flex items-center gap-2 px-5 py-2 bg-stone-900 text-white rounded-xl text-sm font-black hover:bg-stone-800 transition-colors">
                 <User className="w-4 h-4" />
-                ورود / ثبت‌نام
+                {t(lang, 'login')}
               </button>
             )}
           </div>

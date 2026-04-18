@@ -14,6 +14,7 @@ import { messagesRouter } from './server/routes/messages';
 import { testimonialsRouter } from './server/routes/testimonials';
 import { volunteersRouter } from './server/routes/volunteers';
 import { impactRouter } from './server/routes/impact';
+import { uploadsRouter } from './server/routes/uploads';
 
 config();
 
@@ -22,7 +23,10 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3001;
 
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
+
+  // Serve uploaded images
+  app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 
   const dbPath = process.env.DB_PATH || 'charity.db';
   const db = new Database(dbPath);
@@ -37,6 +41,16 @@ async function startServer() {
   app.use('/api/testimonials', testimonialsRouter(db));
   app.use('/api/volunteers', volunteersRouter(db));
   app.use('/api/impact-reports', impactRouter(db));
+  app.use('/api/uploads', uploadsRouter(db));
+
+  // Public site config — read from env, safe to expose
+  app.get('/api/config', (_req, res) => {
+    res.json({
+      siteName: process.env.SITE_NAME || 'رمیت',
+      siteDomain: process.env.SITE_DOMAIN || 'ramayt.ir',
+      showEnamad: process.env.SHOW_ENAMAD === 'true',
+    });
+  });
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });

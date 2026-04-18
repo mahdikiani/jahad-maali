@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Check, EyeOff, Loader2, Trash2, Users } from 'lucide-react';
+import { Plus, X, Check, EyeOff, Loader2, Trash2 } from 'lucide-react';
 import { Modal } from '../shared/Modal';
+import { ImageUpload } from '../shared/ImageUpload';
 import { api } from '../../lib/api';
+import { useLang } from '../../lib/LangContext';
+import { t } from '../../lib/i18n';
 import type { Campaign, Message } from '../../types';
 
 interface AdminPanelProps {
@@ -15,11 +18,13 @@ type Tab = 'campaigns' | 'messages' | 'volunteers' | 'reports' | 'testimonials';
 
 export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelProps) {
   if (!auth.isAdmin) return null;
+  const { lang } = useLang();
   const [tab, setTab] = useState<Tab>('campaigns');
   const [pendingMsgs, setPendingMsgs] = useState<Message[]>([]);
   const [volunteers, setVolunteers] = useState<any[]>([]);
   const [showAddCampaign, setShowAddCampaign] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [coverImage, setCoverImage] = useState('');
 
   useEffect(() => {
     if (tab === 'messages') api.getPendingMessages().then(setPendingMsgs).catch(() => {});
@@ -35,11 +40,12 @@ export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelPr
         title: fd.get('title'),
         description: fd.get('description'),
         target_amount: Number(fd.get('target_amount')),
-        cover_image: fd.get('cover_image') || null,
+        cover_image: coverImage || null,
         category: fd.get('category'),
         deadline: fd.get('deadline') || null,
       });
       setShowAddCampaign(false);
+      setCoverImage('');
       onRefresh();
     } catch (e: any) { alert(e.message); }
     finally { setLoading(false); }
@@ -57,15 +63,15 @@ export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelPr
   };
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: 'campaigns', label: 'کمپین‌ها' },
-    { key: 'messages', label: `پیام‌ها${pendingMsgs.length ? ` (${pendingMsgs.length})` : ''}` },
-    { key: 'volunteers', label: 'داوطلبان' },
-    { key: 'reports', label: 'گزارش جدید' },
-    { key: 'testimonials', label: 'Testimonials' },
+    { key: 'campaigns', label: t(lang, 'campaigns') },
+    { key: 'messages', label: `${t(lang, 'messages')}${pendingMsgs.length ? ` (${pendingMsgs.length})` : ''}` },
+    { key: 'volunteers', label: t(lang, 'volunteers') },
+    { key: 'reports', label: t(lang, 'newReport') },
+    { key: 'testimonials', label: t(lang, 'testimonials') },
   ];
 
   return (
-    <Modal title="پنل مدیریت" onClose={onClose} size="lg">
+    <Modal title={t(lang, 'managementPanel')} onClose={onClose} size="lg">
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-stone-100 rounded-2xl mb-6">
         {TABS.map(t => (
@@ -81,16 +87,16 @@ export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelPr
         <div className="space-y-3">
           <button onClick={() => setShowAddCampaign(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#1F3D2B] text-white rounded-2xl font-bold text-sm hover:bg-[#2d5a3e] transition-all">
-            <Plus className="w-4 h-4" /> کمپین جدید
+            <Plus className="w-4 h-4" /> {t(lang, 'newCampaign')}
           </button>
           {campaigns.map(c => (
             <div key={c.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-2xl border border-stone-200">
               <div>
                 <p className="font-bold text-sm text-[#1F3D2B]">{c.title}</p>
                 <p className="text-xs text-stone-400 mt-0.5">
-                  {c.current_amount.toLocaleString('fa-IR')} / {c.target_amount.toLocaleString('fa-IR')} تومان
+                  {c.current_amount.toLocaleString('fa-IR')} / {c.target_amount.toLocaleString('fa-IR')} {t(lang, 'toman')}
                   <span className={`mr-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-stone-200 text-stone-500'}`}>
-                    {c.status === 'active' ? 'فعال' : c.status === 'completed' ? 'تکمیل' : 'متوقف'}
+                    {c.status === 'active' ? t(lang, 'active') : c.status === 'completed' ? t(lang, 'completed') : t(lang, 'paused')}
                   </span>
                 </p>
               </div>
@@ -114,11 +120,11 @@ export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelPr
                 <div className="flex gap-2">
                   <button onClick={() => handleModerate(m.id, 'approved')}
                     className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-xl text-xs font-bold hover:bg-green-200 transition-colors">
-                    <Check className="w-3.5 h-3.5" /> تأیید
+                    <Check className="w-3.5 h-3.5" /> {t(lang, 'approve')}
                   </button>
                   <button onClick={() => handleModerate(m.id, 'hidden')}
                     className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-xl text-xs font-bold hover:bg-red-200 transition-colors">
-                    <EyeOff className="w-3.5 h-3.5" /> رد
+                    <EyeOff className="w-3.5 h-3.5" /> {t(lang, 'reject')}
                   </button>
                 </div>
               </div>
@@ -165,36 +171,40 @@ export function AdminPanel({ onClose, campaigns, onRefresh, auth }: AdminPanelPr
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-[#1F3D2B]">کمپین جدید</h3>
+              <h3 className="text-xl font-black text-[#1F3D2B]">{t(lang, 'newCampaign')}</h3>
               <button onClick={() => setShowAddCampaign(false)}><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleAddCampaign} className="space-y-4">
-              <Field label="عنوان" name="title" required />
+              <Field label={t(lang, 'title')} name="title" required />
               <div>
-                <label className="block text-xs font-bold text-stone-400 mb-1.5">توضیحات (Markdown)</label>
+                <label className="block text-xs font-bold text-stone-400 mb-1.5">{t(lang, 'description')}</label>
                 <textarea name="description" required rows={5}
                   className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-[#1F3D2B] outline-none text-sm resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="هدف مالی (تومان)" name="target_amount" type="number" required />
+                <Field label={t(lang, 'targetAmount')} name="target_amount" type="number" required />
                 <div>
-                  <label className="block text-xs font-bold text-stone-400 mb-1.5">دسته‌بندی</label>
+                  <label className="block text-xs font-bold text-stone-400 mb-1.5">{t(lang, 'category')}</label>
                   <select name="category" className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-[#1F3D2B] outline-none text-sm">
-                    <option value="shelter">سرپناه</option>
-                    <option value="food">غذا</option>
-                    <option value="medical">درمان</option>
-                    <option value="education">آموزش</option>
-                    <option value="defense">دفاع</option>
-                    <option value="other">سایر</option>
+                    <option value="shelter">{t(lang, 'shelter')}</option>
+                    <option value="food">{t(lang, 'food')}</option>
+                    <option value="medical">{t(lang, 'medical')}</option>
+                    <option value="education">{t(lang, 'education')}</option>
+                    <option value="defense">{t(lang, 'defense')}</option>
+                    <option value="other">{t(lang, 'other')}</option>
                   </select>
                 </div>
               </div>
-              <Field label="آدرس تصویر کاور" name="cover_image" placeholder="https://..." />
-              <Field label="ددلاین (اختیاری)" name="deadline" type="date" />
+              <ImageUpload
+                label={t(lang, 'coverImage')}
+                value={coverImage}
+                onChange={setCoverImage}
+              />
+              <Field label={t(lang, 'deadline')} name="deadline" type="date" />
               <button type="submit" disabled={loading}
                 className="w-full py-3.5 bg-[#1F3D2B] text-white rounded-2xl font-bold hover:bg-[#2d5a3e] transition-all flex items-center justify-center gap-2 disabled:opacity-60">
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                ثبت و انتشار
+                {t(lang, 'submit')}
               </button>
             </form>
           </div>
@@ -215,8 +225,10 @@ function Field({ label, name, type = 'text', required = false, placeholder = '' 
 }
 
 function ReportsAdmin({ campaigns }: { campaigns: Campaign[] }) {
+  const { lang } = useLang();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [reportImage, setReportImage] = useState('');
 
   const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -228,10 +240,11 @@ function ReportsAdmin({ campaigns }: { campaigns: Campaign[] }) {
         title: fd.get('title'),
         body: fd.get('body'),
         amount_spent: Number(fd.get('amount_spent')) || 0,
-        image_url: fd.get('image_url') || null,
+        image_url: reportImage || null,
         video_url: fd.get('video_url') || null,
       });
       setDone(true);
+      setReportImage('');
       (e.target as HTMLFormElement).reset();
       setTimeout(() => setDone(false), 3000);
     } catch (e: any) { alert(e.message); }
@@ -259,9 +272,9 @@ function ReportsAdmin({ campaigns }: { campaigns: Campaign[] }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field label="مبلغ هزینه‌شده (تومان)" name="amount_spent" type="number" />
-        <Field label="آدرس تصویر" name="image_url" placeholder="https://..." />
+        <Field label="آدرس ویدئو (اختیاری)" name="video_url" placeholder="https://..." />
       </div>
-      <Field label="آدرس ویدئو (اختیاری)" name="video_url" placeholder="https://..." />
+      <ImageUpload label={t(lang, 'uploadImage')} value={reportImage} onChange={setReportImage} />
       <button type="submit" disabled={loading}
         className="w-full py-3 bg-stone-900 text-white rounded-2xl font-bold hover:bg-stone-800 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ThumbsUp, Star, MessageSquare, ChevronDown } from 'lucide-react';
 import { api } from '../../lib/api';
 import type { Message, AuthState } from '../../types';
+import { useLang } from '../../lib/LangContext';
+import { t, formatNumber } from '../../lib/i18n';
 
 interface MessagesSectionProps {
   auth: AuthState;
@@ -10,6 +12,7 @@ interface MessagesSectionProps {
 }
 
 export function MessagesSection({ auth, onLoginRequired }: MessagesSectionProps) {
+  const { lang } = useLang();
   const [featured, setFeatured] = useState<{ today: Message | null; top: Message[] }>({ today: null, top: [] });
   const [showAll, setShowAll] = useState(false);
   const [allMessages, setAllMessages] = useState<Message[]>([]);
@@ -23,8 +26,6 @@ export function MessagesSection({ auth, onLoginRequired }: MessagesSectionProps)
 
   const loadAll = async () => {
     if (!showAll) {
-      const msgs = await api.getCampaignMessages(0).catch(() => []);
-      // fallback: get all
       const all = await fetch('/api/messages/featured').then(r => r.json()).catch(() => ({ top: [] }));
       setAllMessages(all.top || []);
     }
@@ -52,41 +53,39 @@ export function MessagesSection({ auth, onLoginRequired }: MessagesSectionProps)
     <section className="py-20 bg-stone-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="border-r-4 border-[#8B7355] pr-5 mb-12">
-          <h2 className="text-3xl font-black text-white mb-1">پیام‌های همدلی</h2>
-          <p className="text-white/50">صدای مجاهدان مالی</p>
+          <h2 className="text-3xl font-black text-white mb-1">{t(lang, 'messagesTitle')}</h2>
+          <p className="text-white/50">{t(lang, 'messagesSubtitle')}</p>
         </div>
 
-        {/* Today's top message */}
         {featured.today && (
           <div className="mb-10 p-6 bg-[#8B7355]/10 border border-[#8B7355]/30 rounded-3xl">
             <div className="flex items-center gap-2 mb-4">
               <Star className="w-5 h-5 text-[#D2B48C] fill-current" />
-              <span className="text-[#D2B48C] font-bold text-sm">پیام منتخب امروز</span>
+              <span className="text-[#D2B48C] font-bold text-sm">{t(lang, 'todayMessage')}</span>
             </div>
-            <MessageCard msg={featured.today} myVotes={myVotes} voting={voting} onVote={handleVote} featured />
+            <MessageCard msg={featured.today} myVotes={myVotes} voting={voting} onVote={handleVote} featured lang={lang} />
           </div>
         )}
 
-        {/* Top messages grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <AnimatePresence>
             {messages.map((msg, i) => (
               <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <MessageCard msg={msg} myVotes={myVotes} voting={voting} onVote={handleVote} />
+                <MessageCard msg={msg} myVotes={myVotes} voting={voting} onVote={handleVote} lang={lang} />
               </motion.div>
             ))}
           </AnimatePresence>
         </div>
 
         {messages.length === 0 && (
-          <p className="text-center text-white/30 py-10">هنوز پیامی ثبت نشده است.</p>
+          <p className="text-center text-white/30 py-10">{t(lang, 'noMessages')}</p>
         )}
 
         <div className="text-center mt-8">
           <button onClick={loadAll}
             className="flex items-center gap-2 mx-auto px-6 py-3 bg-white/10 text-white border border-white/20 rounded-2xl font-bold hover:bg-white/20 transition-all text-sm">
             <MessageSquare className="w-4 h-4" />
-            {showAll ? 'نمایش کمتر' : 'مشاهده همه پیام‌ها'}
+            {showAll ? t(lang, 'showLess') : t(lang, 'showAll')}
             <ChevronDown className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`} />
           </button>
         </div>
@@ -95,9 +94,9 @@ export function MessagesSection({ auth, onLoginRequired }: MessagesSectionProps)
   );
 }
 
-function MessageCard({ msg, myVotes, voting, onVote, featured = false }: {
+function MessageCard({ msg, myVotes, voting, onVote, featured = false, lang }: {
   msg: Message; myVotes: number[]; voting: number | null;
-  onVote: (m: Message) => void; featured?: boolean;
+  onVote: (m: Message) => void; featured?: boolean; lang: any;
 }) {
   const voted = myVotes.includes(msg.id);
   return (
@@ -107,7 +106,7 @@ function MessageCard({ msg, myVotes, voting, onVote, featured = false }: {
         <div>
           <p className="text-white/40 text-xs">{msg.campaign_title || ''}</p>
           <p className="text-[#D2B48C] text-xs font-bold mt-0.5">
-            {msg.donation_amount?.toLocaleString('fa-IR')} ت — {msg.user_name || 'ناشناس'}
+            {formatNumber(msg.donation_amount, lang)} {t(lang, 'toman')} — {msg.user_name || t(lang, 'anonymous')}
           </p>
         </div>
         <button onClick={() => onVote(msg)} disabled={voted || voting === msg.id}

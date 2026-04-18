@@ -61,4 +61,10 @@ export const api = {
   // Impact
   getImpactReports: () => request<any[]>('/impact-reports'),
   createImpactReport: (data: any) => request('/impact-reports', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Uploads
+  uploadImage: (data: string, filename?: string) =>
+    request<{ url: string }>('/uploads/image', { method: 'POST', body: JSON.stringify({ data, filename }) }),
+  deleteUpload: (url: string) =>
+    request('/uploads/image', { method: 'DELETE', body: JSON.stringify({ url }) }),
 };

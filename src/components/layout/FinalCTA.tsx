@@ -1,4 +1,6 @@
 import type { Campaign } from '../../types';
+import { useLang } from '../../lib/LangContext';
+import { t, formatNumber } from '../../lib/i18n';
 
 interface FinalCTAProps {
   campaigns: Campaign[];
@@ -6,19 +8,19 @@ interface FinalCTAProps {
 }
 
 export function FinalCTA({ campaigns, onDonate }: FinalCTAProps) {
+  const { lang } = useLang();
   const active = campaigns.filter(c => c.status === 'active');
 
   return (
     <section className="py-24 bg-stone-950">
       <div className="max-w-2xl mx-auto px-4 text-center space-y-8">
         <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
-          الان اقدام کن
+          {t(lang, 'finalCtaTitle')}
         </h2>
         <p className="text-white/55 text-lg leading-relaxed">
-          هر لحظه تأخیر، یک خانواده بیشتر در انتظار می‌ماند. جهاد با مال، همین لحظه است.
+          {t(lang, 'finalCtaSubtitle')}
         </p>
 
-        {/* Campaign picker */}
         {active.length > 0 && (
           <div className="space-y-3">
             {active.map(c => (
@@ -27,22 +29,18 @@ export function FinalCTA({ campaigns, onDonate }: FinalCTAProps) {
                 <div>
                   <p className="font-bold text-white text-sm">{c.title}</p>
                   <p className="text-stone-500 text-xs mt-0.5">
-                    {c.current_amount.toLocaleString('fa-IR')} از {c.target_amount.toLocaleString('fa-IR')} تومان
+                    {formatNumber(c.current_amount, lang)} {lang === 'en' ? 'of' : 'از'} {formatNumber(c.target_amount, lang)} {t(lang, 'toman')}
                   </p>
                 </div>
                 <span className="px-4 py-2 bg-[#8B7355] text-white rounded-xl text-sm font-bold group-hover:bg-[#705D45] transition-colors shrink-0 mr-4">
-                  کمک کن
+                  {t(lang, 'helpBtn')}
                 </span>
               </button>
             ))}
           </div>
         )}
 
-        <p
-          className="text-xl text-[#D2B48C]/50"
-          dir="rtl"
-          style={{ fontFamily: '"me_quran", serif' }}
-        >
+        <p className="text-xl text-[#D2B48C]/50" dir="rtl" style={{ fontFamily: '"me_quran", serif' }}>
           «وَأَنفِقُوا فِي سَبِيلِ اللَّهِ»
         </p>
       </div>
