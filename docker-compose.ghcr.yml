@@ -1,14 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      network: host
-      extra_hosts:
-        - "host.docker.internal:127.0.0.1"
-      args:
-        HTTP_PROXY: http://127.0.0.1:10800
-        HTTPS_PROXY: http://127.0.0.1:10800
+    image: ghcr.io/mahdikiani/ramayt:main
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -21,12 +13,13 @@ services:
       DB_PATH: /data/charity.db
     volumes:
       - ./db_data:/data
-    # healthcheck:
-    #   test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/campaigns"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 10s
+      - ./uploads_data:/app/public/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/campaigns"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - traefik-net
     labels:
@@ -36,7 +29,7 @@ services:
       - "traefik.http.routers.${PROJECT_NAME}-secure.entrypoints=websecure"
       - "traefik.http.routers.${PROJECT_NAME}-secure.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.${PROJECT_NAME}-secure.tls=true"
-      # - "traefik.http.routers.${PROJECT_NAME}-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${PROJECT_NAME}-secure.tls.certresolver=letsencrypt"
       - "traefik.http.services.${PROJECT_NAME}.loadbalancer.server.port=3001"
       # - "traefik.http.services.${PROJECT_NAME}.loadbalancer.server.scheme=https"
       - "traefik.docker.network=traefik-net"
