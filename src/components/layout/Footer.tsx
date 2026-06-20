@@ -32,7 +32,7 @@ export function Footer({ onNavigate }: FooterProps) {
               {t(lang, 'footerQuoteTranslation')}
             </p>
             {/* eNamad — controlled by SHOW_ENAMAD env var */}
-            {showEnamad && (
+            {
               <div className="pt-2">
                 <a
                   // @ts-ignore — referrerpolicy is valid HTML but React types it as referrerPolicy
@@ -51,7 +51,7 @@ export function Footer({ onNavigate }: FooterProps) {
                   />
                 </a>
               </div>
-            )}
+            }
           </div>
 
           {/* Links */}
